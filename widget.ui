@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>371</width>
+    <width>390</width>
     <height>55</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Сервер изделий УР-1</string>
+   <string>изделие УР-1</string>
   </property>
   <widget class="QLineEdit" name="macaddr">
    <property name="enabled">
@@ -66,12 +66,12 @@
     <rect>
      <x>290</x>
      <y>10</y>
-     <width>71</width>
+     <width>91</width>
      <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>reboot</string>
+    <string>перезагрузка</string>
    </property>
   </widget>
   <widget class="QLineEdit" name="ping">
@@ -126,7 +126,7 @@
     </font>
    </property>
    <property name="text">
-    <string>offline</string>
+    <string>обрыв</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignCenter</set>

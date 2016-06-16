@@ -16,25 +16,24 @@ class Widget : public QWidget
   Q_OBJECT
 
 public:
-  Widget(int nPort, QWidget *parent = 0);
-  ~Widget();
+    Widget(QWidget *parent = 0);
+    ~Widget();
 
-private:
-  QTcpServer* m_ptcpServer;
-  Ui::Widget *ui;
-  QTimer timer;
-  QMap<QString, QTcpSocket*> map;
+    void enabledHost(bool b);
+    void setMacAddr(QString mac);
+    void setVal(int bit);
+    const QString getMacAddr();
+    const QString getPing();
 
-private:
-    void sendToClient(QTcpSocket* pSocket, const char str);
+    Ui::Widget *ui;
 
-public slots:
-    virtual void slotNewConnection();
-            void slotReadClient   ();
-            void slotOnOff        ();
-            void slotdisconnect   ();
-            void slotTimeOut      ();
-            void slotReboot       ();
+private slots:
+    void slot_on_off();
+    void slotReboot();
+signals:
+    void signalPush(char);
+    void signalReboot(char);
+
 };
 
 #endif // WIDGET_H
