@@ -14,10 +14,16 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         widget.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    errorlist.cpp
 
 HEADERS  += widget.h \
-    mainwindow.h
+    mainwindow.h \
+    errorlist.h
 
 FORMS    += widget.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    errorlist.ui
+
+RESOURCES += \
+    img/img.qrc

@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>attention.png</file>
+        <file>attention-bw.png</file>
+    </qresource>
+</RCC>
