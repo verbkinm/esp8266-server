@@ -33,7 +33,7 @@ void Widget::enabledHost(bool b)
         ui->on_off->setText("?");
     }
     connect(ui->on_off, SIGNAL(clicked(bool)), SLOT(slot_on_off()) );
-    connect(ui->reboot,SIGNAL(clicked(bool)), SLOT(slotReboot()) );
+    connect(ui->reboot, SIGNAL(clicked(bool)), SLOT(slotReboot())  );
 }
 const QString Widget::getMacAddr()
 {
@@ -42,7 +42,6 @@ const QString Widget::getMacAddr()
 const QString Widget::getPing(){
   return ui->ping->text();
 }
-
 void Widget::setMacAddr(QString mac)
 {
     ui->macaddr->setText(mac);
@@ -65,15 +64,15 @@ void Widget::slot_on_off()
         emit signalPush('0');
         return;
     }
-//    if(ui->on_off->text() != "0" || ui->on_off->text() != "1" ){
+    if(ui->on_off->text() != "0" || ui->on_off->text() != "1" ){
 //        QMessageBox::critical(0,"Ошибка устройства УР-1!","Невозможно получить ответ от подключенного устройства!" );
-//    }
+        return;
+    }
 }
 void Widget::slotReboot()
 {
   emit signalReboot('2');
 }
-
 Widget::~Widget()
 {
   delete ui;

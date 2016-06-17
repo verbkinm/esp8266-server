@@ -6,6 +6,10 @@
 #include <QTime>
 #include <QLabel>
 #include <QThread>
+#include <QFile>
+#include <QDir>
+#include <QBitArray>
+#include <IOStream>
 
 #include "widget.h"
 
@@ -22,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->start_listening->setStyleSheet(QString::fromUtf8("background-color: rgb(63, 199, 72);"));
 
     serverListening = false;
+    led             = false;
 
     QVBoxLayout *pLayout = new QVBoxLayout;
 
@@ -32,13 +37,24 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     ui->groupBox->setLayout(pLayout);
     ui->attention->setPixmap(QPixmap(":/attention-bw.png"));
-    ui->attention->setPixmap(QPixmap(":/attention-bw.png"));
 
     this->setStatusBar(new QStatusBar);
     pStatusBarError = new QLabel("Ошибок нет =))");
     pStatusBarCountClients = new QLabel("Кол-во подключенных клиентов: 0");
     this->statusBar()->addWidget(pStatusBarCountClients);
     this->statusBar()->addWidget(pStatusBarError);
+
+    QString fileName = QDir::currentPath() + "\\tmp.mp3";
+    QFile fileQrc(":/attention.mp3");
+    fileQrc.open(QIODevice::ReadOnly);
+    QByteArray ba = fileQrc.readAll();
+    QFile fileTmp(fileName);
+    fileTmp.open(QIODevice::WriteOnly);
+    fileTmp.write(ba);
+    fileTmp.close();
+
+    player = new QMediaPlayer;
+    player->setMedia(QUrl::fromLocalFile(fileName));
 
     connect(ui->ErrorList,        SIGNAL(triggered(bool)),SLOT(slotOpenErrorList()) );
 
@@ -47,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->port,             SIGNAL(returnPressed()),SLOT(slotStartServer())   );
     connect(this,                 SIGNAL(signalError(int)),SLOT(slotError(int))     );
     connect(&timerError,          SIGNAL(timeout()),      SLOT(slotTimeErrorOut())  );
+    connect(&timerBlink,          SIGNAL(timeout()),      SLOT(slotTimerBlink())    );
 }
 void MainWindow::slotOpenErrorList()
 {
@@ -65,6 +82,20 @@ void MainWindow::slotTimeErrorOut()
 {
     emit signalError(0);
 }
+void MainWindow::slotTimerBlink()
+{
+    if(led){
+        ui->attention->setPixmap(QPixmap(":/attention-bw.png"));
+        led = false;
+        return;
+    }
+    if(!led){
+        ui->attention->setPixmap(QPixmap(":/attention.png"));
+        led = true;
+        return;
+    }
+}
+
 void MainWindow::slotReboot(char byte)
 {
     Widget* w = (Widget*)sender();
@@ -105,7 +136,6 @@ void MainWindow::slotStartServer()
             ui->port->setFocus();
             return;
         }
-
         if (!m_ptcpServer->listen(QHostAddress(ui->host->text()), ui->port->text().toInt())) {
             QMessageBox::critical(0,"Server Error","Unable to start the server:"+ m_ptcpServer->errorString() );
             m_ptcpServer->close();
@@ -116,7 +146,7 @@ void MainWindow::slotStartServer()
         ui->port->setEnabled(false);
         ui->start_listening->setText("Стоп");
         ui->start_listening->setStyleSheet(QString::fromUtf8("background-color: rgb(240, 29, 29);"));
-        connect(m_ptcpServer,         SIGNAL(newConnection()),SLOT(slotNewConnection()) );
+        connect(m_ptcpServer, SIGNAL(newConnection()), SLOT(slotNewConnection()) );
         return;
     }
     if(serverListening){
@@ -125,7 +155,7 @@ void MainWindow::slotStartServer()
         serverListening = false;
         ui->host->setEnabled(true);
         ui->port->setEnabled(true);
-        ui->start_listening->setText("Пуска");
+        ui->start_listening->setText("Пуск");
         ui->start_listening->setStyleSheet(QString::fromUtf8("background-color: rgb(63, 199, 72);"));
         for(int i = 0; i < n; i++){
             list[i]->enabledHost(false);
@@ -190,8 +220,8 @@ void MainWindow::slotReadClient()
         }
         list[free]->enabledHost(true);
         list[free]->setMacAddr(answerStr);
-        connect(list[free], SIGNAL(signalReboot(char)), this, SLOT(slotReboot(char))        );
-        connect(list[free], SIGNAL(signalPush(char)),         SLOT(slotSendToClient(char))  );
+        connect(list[free], SIGNAL(signalReboot(char)), SLOT(slotReboot(char))        );
+        connect(list[free], SIGNAL(signalPush(char)),   SLOT(slotSendToClient(char))  );
         return;
     }
     if(answer.startsWith("low")){
@@ -237,11 +267,11 @@ void MainWindow::slotdisconnect()
             timer[i].stop();
             map.remove(map.key((QTcpSocket*)sender()));
         }
-        qDebug() << "test3";
-        qDebug() <<  "count disconnected" << --countClient;
-        QString tmp = pStatusBarCountClients->text().mid(0,30);
-        pStatusBarCountClients->setText(tmp + QString::number(countClient));
     }
+    qDebug() << "test3";
+    qDebug() <<  "count disconnected" << --countClient;
+    QString tmp = pStatusBarCountClients->text().mid(0,30);
+    pStatusBarCountClients->setText(tmp + QString::number(countClient));
 }
 int MainWindow::WhoseIsTimer(QTimer *t)
 {
@@ -263,12 +293,22 @@ void MainWindow::slotError(int err)
 {
     qDebug() << "slotError " << err;
     ui->attention->setPixmap(QPixmap(":/attention.png"));
+    led = true;
     timerError.start(10000);
+    timerBlink.start(300);
+    player->stop();
+    if(err != 0)
+        player->play();
+    qDebug() << "start";
     switch (err) {
       case 0:
+        player->stop();
+        qDebug() << "stop";
         ui->attention->setPixmap(QPixmap(":/attention-bw.png"));
+        led = false;
         pStatusBarError->setText("Ошибок нет =))");
         timerError.stop();
+        timerBlink.stop();
         break;
       case 1:
         pStatusBarError->setText("Ошибка: " + QString::number(err));
@@ -289,6 +329,9 @@ void MainWindow::slotError(int err)
 //      var.close();
       qDebug() << var->objectName();
     }
+  QString fileName = QDir::currentPath() + "\\tmp.mp3";
+  QFile file(fileName);
+  file.remove();
   exit(0);
 }
 

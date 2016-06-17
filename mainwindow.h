@@ -7,6 +7,7 @@
 #include <QTimer>
 #include <QMap>
 #include <QLabel>
+#include <QMediaPlayer>
 
 #include "errorlist.h"
 
@@ -26,10 +27,11 @@ private:
     QTcpServer*                 m_ptcpServer;
     QTimer                      timer[3];
     QMap<QString, QTcpSocket*>  map;
-    bool                        serverListening;
+    bool                        serverListening, led;
     int                         countClient = 0;
-    QTimer                      timerError;
+    QTimer                      timerError, timerBlink;
     QLabel                      *pStatusBarError, *pStatusBarCountClients;
+    QMediaPlayer*               player;
 
     ErrorList *errorList;
 
@@ -46,6 +48,7 @@ public slots:
             void slotdisconnect   ();
             void slotTimeOut      ();
             void slotTimeErrorOut ();
+            void slotTimerBlink   ();
             void slotReboot       (char byte);
             void slotSendToClient (char byte);
             void slotError        (int err);

@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>attention.png</file>
         <file>attention-bw.png</file>
+        <file>attention.mp3</file>
     </qresource>
 </RCC>
