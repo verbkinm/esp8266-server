@@ -8,8 +8,11 @@
 #include <QMap>
 #include <QLabel>
 #include <QMediaPlayer>
+#include <QFile>
 
 #include "errorlist.h"
+#include "log.h"
+#include "logfileread.h"
 
 namespace Ui {
   class MainWindow;
@@ -34,14 +37,19 @@ private:
     QMediaPlayer*               player;
 
     ErrorList *errorList;
+    LogFileRead *logFileRead;
+    Log loging;
+//    QFile file;
+
 
     int WhoIsWidget(QString mac);
     int WhoseIsTimer(QTimer* t);
     int WhoIsFree();
+    void appendLogWindow();
 
     virtual void closeEvent(QCloseEvent*);
 
-public slots:
+private slots:
             void slotStartServer  ();
     virtual void slotNewConnection();
             void slotReadClient   ();
@@ -52,11 +60,16 @@ public slots:
             void slotReboot       (char byte);
             void slotSendToClient (char byte);
             void slotError        (int err);
+            void slotSocketError  (QAbstractSocket::SocketError err);
 
             void slotOpenErrorList();
             void slotCloseErrorList();
+            void slotOpenLog      ();
+            void slotCloseLog     ();
+            void slotLogFileChanged();
+
 signals:
-            void signalError       (int);
+            void signalError      (int);
 };
 
 #endif // MAINWINDOW_H

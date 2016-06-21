@@ -8,13 +8,13 @@
 #include <QThread>
 #include <QFile>
 #include <QDir>
-#include <QBitArray>
-#include <IOStream>
+#include <QTextEdit>
 
 #include "widget.h"
 
 Widget* list[3];
 int n = 3;
+
 
 #define timeOut 5000
 
@@ -22,6 +22,9 @@ MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::MainWindow)
 {
+    loging.append("==============================");
+    loging.append("Application start");
+
     ui->setupUi(this);
     ui->start_listening->setStyleSheet(QString::fromUtf8("background-color: rgb(63, 199, 72);"));
 
@@ -57,6 +60,7 @@ MainWindow::MainWindow(QWidget *parent) :
     player->setMedia(QUrl::fromLocalFile(fileName));
 
     connect(ui->ErrorList,        SIGNAL(triggered(bool)),SLOT(slotOpenErrorList()) );
+    connect(ui->log,              SIGNAL(triggered(bool)),SLOT(slotOpenLog())       );
 
     connect(ui->start_listening,  SIGNAL(clicked(bool)),  SLOT(slotStartServer())   );
     connect(ui->host,             SIGNAL(returnPressed()),SLOT(slotStartServer())   );
@@ -72,12 +76,41 @@ void MainWindow::slotOpenErrorList()
     ui->ErrorList->setEnabled(false);
     connect(errorList, SIGNAL(signalClose()), SLOT(slotCloseErrorList()) );
 }
+void MainWindow::slotOpenLog()
+{
+  logFileRead = new LogFileRead;
+  QFile file(QString(QDir::currentPath().replace("/","\\") + "\\esp-01.log") );
+  file.open(QIODevice::ReadOnly);
+  QString text = file.readAll();
+  logFileRead->addText(text);
+  logFileRead->show();
+  ui->log->setEnabled(false);
+//  connect(&file, SIGNAL( bytesWritten(qint64)), SLOT(slotLogFileChanged())  );
+  connect(logFileRead, SIGNAL(signalClose()), SLOT(slotCloseLog()) );
+}
+void MainWindow::slotLogFileChanged()
+{
+  qDebug() << "file changed";
+//  QFile file(QString(QDir::currentPath().replace("/","\\") + "\\esp-01.log") );
+//  file.open(QIODevice::ReadOnly);
+//  QString text = file.readAll();
+//  logFileRead->clear();
+//  logFileRead->addText(text);
+}
 void MainWindow::slotCloseErrorList()
 {
+//    disconnect(&file, SIGNAL(bytesWritten(qint64)), this, SLOT(slotLogFileChenged())  );
     disconnect(errorList, SIGNAL(signalClose()), this, SLOT(slotCloseErrorList()) );
     delete errorList;
     ui->ErrorList->setEnabled(true);
 }
+void MainWindow::slotCloseLog()
+{
+  disconnect(logFileRead, SIGNAL(signalClose()), this, SLOT(slotCloseLog()) );
+  delete logFileRead;
+  ui->log->setEnabled(true);
+}
+
 void MainWindow::slotTimeErrorOut()
 {
     emit signalError(0);
@@ -95,25 +128,32 @@ void MainWindow::slotTimerBlink()
         return;
     }
 }
-
 void MainWindow::slotReboot(char byte)
 {
     Widget* w = (Widget*)sender();
+    QTcpSocket* pClientSocket = map.value(w->getMacAddr());
     for(int i = 0; i < n; i++)
         qDebug() << list[i];
     qDebug() << "write from " << w;
-    map.value(w->getMacAddr())->write(&byte);
+    loging.append("rebooting client: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()) );
+    appendLogWindow();
+    pClientSocket->write(&byte);
     qDebug() << "after write";
-    map.value(w->getMacAddr())->close();
+    pClientSocket->close();
     qDebug() << "after close";
-    disconnect(list[0],SIGNAL(signalReboot(char)), this, SLOT(slotReboot(char)) );
+    int i = WhoIsWidget(w->getMacAddr());
+    disconnect(list[i], SIGNAL(signalReboot(char)), this, SLOT(slotReboot(char))        );
+    disconnect(list[i], SIGNAL(signalPush(char)),   this, SLOT(slotSendToClient(char))  );
+
     ui->start_listening->setFocus();
 }
 void MainWindow::slotSendToClient(char byte)
 {
     Widget* w = (Widget*)sender();
-  //  qDebug() << WhoIsWidget(w->getMacAddr() );
-    map.value(w->getMacAddr())->write(&byte);
+    QTcpSocket* pClientSocket = map.value(w->getMacAddr());
+    pClientSocket->write(&byte);
+    loging.append("send " + QString(byte) + " to client: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()) );
+    appendLogWindow();
 }
 void MainWindow::slotStartServer()
 {
@@ -147,6 +187,8 @@ void MainWindow::slotStartServer()
         ui->start_listening->setText("Стоп");
         ui->start_listening->setStyleSheet(QString::fromUtf8("background-color: rgb(240, 29, 29);"));
         connect(m_ptcpServer, SIGNAL(newConnection()), SLOT(slotNewConnection()) );
+        loging.append("Server start");
+        appendLogWindow();
         return;
     }
     if(serverListening){
@@ -161,22 +203,31 @@ void MainWindow::slotStartServer()
             list[i]->enabledHost(false);
         }
         map.clear();
+        loging.append("Server stop");
+        appendLogWindow();
         return;
     }
 }
 /*virtual*/ void MainWindow::slotNewConnection()
 {
   QTcpSocket* pClientSocket = m_ptcpServer->nextPendingConnection();
-  qDebug() <<  "count connect" << ++countClient << "ip " << pClientSocket->peerAddress() << "port " << pClientSocket->peerPort() << "name " << pClientSocket->peerName();
+  loging.append("connecting peer: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()) );
+  appendLogWindow();
   QString tmp = pStatusBarCountClients->text().mid(0,30);
-  pStatusBarCountClients->setText(tmp + QString::number(countClient));
+  pStatusBarCountClients->setText(tmp + QString::number(++countClient));
 
   connect(pClientSocket, SIGNAL(disconnected()),pClientSocket,  SLOT(deleteLater())     );
   connect(pClientSocket, SIGNAL(disconnected()),this,           SLOT(slotdisconnect())  );
   connect(pClientSocket, SIGNAL(readyRead()),   this,           SLOT(slotReadClient())  );
+  connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)),SLOT(slotSocketError(QAbstractSocket::SocketError)) );
 
   qDebug() << m_ptcpServer->socketDescriptor();
 }
+void MainWindow::slotSocketError(QAbstractSocket::SocketError err)
+{
+  qDebug() << "Error socket " << err;
+}
+
 int MainWindow::WhoIsWidget(QString mac)
 {
     for(int i = 0; i < n; i++){
@@ -193,6 +244,15 @@ int MainWindow::WhoIsFree()
   }
   return -1;
 }
+void MainWindow::appendLogWindow()
+{
+  if(!ui->log->isEnabled()){
+    QFile file(QString(QDir::currentPath().replace("/","\\") + "\\esp-01.log") );
+    file.open(QIODevice::ReadOnly);
+    logFileRead->addText(file.readAll());
+  }
+}
+
 void MainWindow::slotReadClient()
 {
     QTcpSocket* pClientSocket = (QTcpSocket*)sender();
@@ -202,6 +262,8 @@ void MainWindow::slotReadClient()
         qDebug() << map.keys();
         foreach (QString key, map.keys()) {
               if(answerStr == key){
+                  loging.append("ERROR 1(conflict the key-addresses) Connecting client: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()));
+                  appendLogWindow();
                   emit signalError(1);
                   pClientSocket->close();
                   QThread::usleep(500);
@@ -213,6 +275,8 @@ void MainWindow::slotReadClient()
         map[answerStr] = pClientSocket;
         int free = WhoIsFree();
         if(free == -1){
+            loging.append("ERROR 3(There is not enough free space on the control panel MO-1) Connecting client: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()));
+            appendLogWindow();
             emit signalError(3);
             pClientSocket->close();
             map.remove(map.key((QTcpSocket*)sender()));
@@ -252,26 +316,31 @@ void MainWindow::slotReadClient()
         connect(&timer[WhoIsWidget(map.key((QTcpSocket*)sender()))],SIGNAL(timeout()), SLOT(slotTimeOut()) );
         return;
     }
+    loging.append("ERROR 2(Error client request) Connecting client: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()));
+    appendLogWindow();
     emit signalError(2);
     pClientSocket->close();// disconnected();
 }
-void MainWindow::slotdisconnect()
+void MainWindow:: slotdisconnect()
 {
+    QTcpSocket* pClientSocket = (QTcpSocket*)sender();
     if(map.size() > 0){
         qDebug() << "test1";
         qDebug() << WhoIsWidget(map.key((QTcpSocket*)sender()));
         int i = WhoIsWidget(map.key((QTcpSocket*)sender()));
         if(i != -1){
             list[i]->enabledHost(false);
+            disconnect(list[i], SIGNAL(signalReboot(char)), this, SLOT(slotReboot(char))        );
+            disconnect(list[i], SIGNAL(signalPush(char)),   this, SLOT(slotSendToClient(char))  );
             qDebug() << "test2";
             timer[i].stop();
             map.remove(map.key((QTcpSocket*)sender()));
         }
     }
-    qDebug() << "test3";
-    qDebug() <<  "count disconnected" << --countClient;
     QString tmp = pStatusBarCountClients->text().mid(0,30);
-    pStatusBarCountClients->setText(tmp + QString::number(countClient));
+    pStatusBarCountClients->setText(tmp + QString::number(--countClient));
+    loging.append("disconnecting peer: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()) );
+    appendLogWindow();
 }
 int MainWindow::WhoseIsTimer(QTimer *t)
 {
@@ -325,14 +394,18 @@ void MainWindow::slotError(int err)
 }
 /*virtual*/ void MainWindow::closeEvent(QCloseEvent *)
 {
-  foreach (QObject* var,  this->children() ) {
-//      var.close();
-      qDebug() << var->objectName();
+    QString fileName = QDir::currentPath() + "\\tmp.mp3";
+    QFile file(fileName);
+    file.remove();
+
+    foreach (QTcpSocket* client, map.values()) {
+        client->close();
     }
-  QString fileName = QDir::currentPath() + "\\tmp.mp3";
-  QFile file(fileName);
-  file.remove();
-  exit(0);
+    loging.append("Server stop");
+    loging.append("Application stop");
+    loging.append("==============================");
+    appendLogWindow();
+    exit(0);
 }
 
 MainWindow::~MainWindow()

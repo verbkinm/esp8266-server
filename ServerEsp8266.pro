@@ -15,15 +15,20 @@ TEMPLATE = app
 SOURCES += main.cpp\
         widget.cpp \
     mainwindow.cpp \
-    errorlist.cpp
+    errorlist.cpp \
+    log.cpp \
+    logfileread.cpp
 
 HEADERS  += widget.h \
     mainwindow.h \
-    errorlist.h
+    errorlist.h \
+    log.h \
+    logfileread.h
 
 FORMS    += widget.ui \
     mainwindow.ui \
-    errorlist.ui
+    errorlist.ui \
+    logfileread.ui
 
 RESOURCES += \
     img/img.qrc
