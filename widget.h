@@ -30,10 +30,10 @@ public:
 private slots:
     void slot_on_off();
     void slotReboot();
+
 signals:
     void signalPush(char);
     void signalReboot(char);
-
 };
 
 #endif // WIDGET_H

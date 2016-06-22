@@ -13,6 +13,7 @@
 #include "errorlist.h"
 #include "log.h"
 #include "logfileread.h"
+#include "widget.h"
 
 namespace Ui {
   class MainWindow;
@@ -28,7 +29,7 @@ public:
 private:
     Ui::MainWindow              *ui;
     QTcpServer*                 m_ptcpServer;
-    QTimer                      timer[3];
+    QTimer                      timer[3];   //timer for ping
     QMap<QString, QTcpSocket*>  map;
     bool                        serverListening, led;
     int                         countClient = 0;
@@ -39,13 +40,15 @@ private:
     ErrorList *errorList;
     LogFileRead *logFileRead;
     Log loging;
-//    QFile file;
 
+    Widget* list[3];
+    int n = 3;      // count of widgets for client
 
-    int WhoIsWidget(QString mac);
-    int WhoseIsTimer(QTimer* t);
-    int WhoIsFree();
-    void appendLogWindow();
+    int WhoIsWidget       (QString mac);
+    int WhoseIsTimer      (QTimer* t);
+    int WhoIsFree         ();
+    void appendLogWindow  ();
+    void logging          (QString text);
 
     virtual void closeEvent(QCloseEvent*);
 
@@ -56,7 +59,7 @@ private slots:
             void slotdisconnect   ();
             void slotTimeOut      ();
             void slotTimeErrorOut ();
-            void slotTimerBlink   ();
+            void slotTimerBlinkOut();
             void slotReboot       (char byte);
             void slotSendToClient (char byte);
             void slotError        (int err);
@@ -66,7 +69,6 @@ private slots:
             void slotCloseErrorList();
             void slotOpenLog      ();
             void slotCloseLog     ();
-            void slotLogFileChanged();
 
 signals:
             void signalError      (int);
