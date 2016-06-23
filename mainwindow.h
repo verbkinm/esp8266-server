@@ -30,7 +30,8 @@ private:
     Ui::MainWindow              *ui;
     QTcpServer*                 m_ptcpServer;
     QTimer                      timer[3];   //timer for ping
-    QMap<QString, QTcpSocket*>  map;
+    QMap<QString, QTcpSocket*>  map;  //map  - [key-addres, QTcpSocket*];
+    QMap<QTimer*, QTcpSocket*>  map2; //map2 - [timerEmptyClient, QTcpSocket*]
     bool                        serverListening, led;
     int                         countClient = 0;
     QTimer                      timerError, timerBlink;
@@ -60,6 +61,7 @@ private slots:
             void slotTimeOut      ();
             void slotTimeErrorOut ();
             void slotTimerBlinkOut();
+            void slotTimerEmptyClientOut();
             void slotReboot       (char byte);
             void slotSendToClient (char byte);
             void slotError        (int err);

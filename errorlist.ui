@@ -25,6 +25,10 @@
   <property name="windowTitle">
    <string>Список ошибок</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="img/img.qrc">
+    <normaloff>:/error_list.png</normaloff>:/error_list.png</iconset>
+  </property>
   <widget class="QTextEdit" name="textEdit">
    <property name="geometry">
     <rect>
@@ -46,10 +50,14 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;1 - &lt;span style=&quot; font-weight:600; color:#aa0000;&quot;&gt;Конфликт ключ-адресов&lt;/span&gt;. Подключаемый клиент высылает ключ-адрес уже существующего, подключенного клиента.&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;2 - &lt;span style=&quot; font-weight:600; color:#aa0000;&quot;&gt;Ошибка запроса клиента&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;. Подключенный клиент высылает неизвестные серверу данные. В данном случае сервер отключает такого клиента.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;3 - &lt;span style=&quot; font-weight:600; color:#aa0000;&quot;&gt;Недостаточно свободного место на панели управления УР-1&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;. Подключенный клиент прошел опознавание сервером и должен занять одно из свободных мест на панели управления УР-1. Так как мест нет - сервер отключает данного клиента.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;3 - &lt;span style=&quot; font-weight:600; color:#aa0000;&quot;&gt;Недостаточно свободного место на панели управления УР-1&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;. Подключенный клиент прошел опознавание сервером и должен занять одно из свободных мест на панели управления УР-1. Так как мест нет - сервер отключает данного клиента.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;4 - &lt;span style=&quot; font-weight:600; color:#aa0000;&quot;&gt;Превышен допустимый максимум подключения клиентов&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;. &lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;5 - &lt;span style=&quot; font-weight:600; color:#aa0000;&quot;&gt;Нет никаких данных&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;. Клиент подключился, но в течении &lt;/span&gt;&lt;span style=&quot; color:#0000ff;&quot;&gt;TIME_OUT&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt; времени не передаёт никаких данных. Данный клиент отключается сервером.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="img/img.qrc"/>
+ </resources>
  <connections/>
 </ui>

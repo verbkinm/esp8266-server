@@ -3,5 +3,8 @@
         <file>attention.png</file>
         <file>attention-bw.png</file>
         <file>attention.mp3</file>
+        <file>exit.png</file>
+        <file>error_list.png</file>
+        <file>log.png</file>
     </qresource>
 </RCC>

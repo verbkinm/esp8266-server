@@ -10,7 +10,8 @@
 #include <QDir>
 #include <QTextEdit>
 
-#define timeOut 5000
+#define TIME_OUT 5000
+#define MAX_CLIENTS 3
 
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
@@ -109,7 +110,8 @@ int MainWindow::WhoseIsTimer(QTimer *t)   //return
     foreach (QTcpSocket* client, map.values()) {
         client->close();
     }
-    logging("Server stop");
+    if(serverListening)
+        logging("Server stop");
     logging("Application stop");
     logging("==============================");
     exit(0);
@@ -143,6 +145,7 @@ void MainWindow::slotStartServer()
             ui->port->setFocus();
             return;
         }
+// Start server
         if (!m_ptcpServer->listen(QHostAddress(ui->host->text()), ui->port->text().toInt())) {
             QMessageBox::critical(0,"Ошибка сервера","Невозможно запустить сервер: "+ m_ptcpServer->errorString() );
             m_ptcpServer->close();
@@ -155,6 +158,8 @@ void MainWindow::slotStartServer()
         ui->start_listening->setStyleSheet(QString::fromUtf8("background-color: rgb(240, 29, 29);"));
         connect(m_ptcpServer, SIGNAL(newConnection()), SLOT(slotNewConnection()) );
         logging("Server start");
+        if(m_ptcpServer->serverAddress().toString() != ui->host->text())
+            ui->host->setText(m_ptcpServer->serverAddress().toString());
         return;
     }
     if(serverListening){
@@ -174,11 +179,13 @@ void MainWindow::slotStartServer()
         timerError.stop();
         timerBlink.stop();
         ui->attention->setPixmap(QPixmap(":/attention-bw.png"));
+        pStatusBarError->setText("Ошибок нет =))");
         return;
     }
 }
 /*virtual*/ void MainWindow::slotNewConnection()
 {
+    QThread::usleep(500);
     QTcpSocket* pClientSocket = m_ptcpServer->nextPendingConnection();
     logging("connecting peer: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()) );
     QString tmp = pStatusBarCountClients->text().mid(0,30);
@@ -188,6 +195,16 @@ void MainWindow::slotStartServer()
     connect(pClientSocket, SIGNAL(disconnected()),this,           SLOT(slotdisconnect())  );
     connect(pClientSocket, SIGNAL(readyRead()),   this,           SLOT(slotReadClient())  );
     connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)),SLOT(slotSocketError(QAbstractSocket::SocketError)) );
+
+    QTimer* timer = new QTimer;
+    map2[timer] = pClientSocket;
+    timer->start(TIME_OUT);
+    connect(timer, SIGNAL(timeout()), SLOT(slotTimerEmptyClientOut()) );
+
+    if(countClient > MAX_CLIENTS){
+        pClientSocket->close();
+        emit signalError(4);
+    }
 }
 void MainWindow::slotReadClient()
 {
@@ -203,7 +220,7 @@ void MainWindow::slotReadClient()
                   QThread::usleep(500);
                   return;
               }
-          }
+        }
         map[answerStr] = pClientSocket;
         int free = WhoIsFree();
         if(free == -1){
@@ -219,35 +236,23 @@ void MainWindow::slotReadClient()
         connect(list[free], SIGNAL(signalReboot(char)), SLOT(slotReboot(char))        );
         return;
     }
-    if(answer.startsWith("low")){
-        if( WhoIsWidget(map.key((QTcpSocket*)sender())) == -1 ){
-            pClientSocket->close();
-            map.remove(map.key((QTcpSocket*)sender()));
+    int w = WhoIsWidget(map.key(pClientSocket));
+    if(w != -1 ){
+        map2.key(pClientSocket)->start(TIME_OUT);
+        if(answer.startsWith("low")){
+            list[w]->setVal(0);
             return;
         }
-        list[WhoIsWidget(map.key((QTcpSocket*)sender()))]->setVal(0);
-        return;
-    }
-    if(answer.startsWith("high")){
-        if( WhoIsWidget(map.key((QTcpSocket*)sender())) == -1 ){
-            pClientSocket->close();
-            map.remove(map.key((QTcpSocket*)sender()));
+        if(answer.startsWith("high")){
+            list[w]->setVal(1);
             return;
         }
-        list[WhoIsWidget(map.key((QTcpSocket*)sender()))]->setVal(1);
-        return;
-    }
-    if(answer.startsWith("ping")){
-        if( WhoIsWidget(map.key((QTcpSocket*)sender())) == -1 ){
-            pClientSocket->close();
-            map.remove(map.key((QTcpSocket*)sender()));
+        if(answer.startsWith("ping")){
+            disconnect(&timer[w],SIGNAL(timeout()), this, SLOT(slotTimeOut()) );
+            timer[w].start(TIME_OUT);
+            connect(&timer[w],SIGNAL(timeout()), SLOT(slotTimeOut()) );
             return;
         }
-        int t = WhoIsWidget(map.key((QTcpSocket*)sender()));
-        disconnect(&timer[t],SIGNAL(timeout()), this, SLOT(slotTimeOut()) );
-        timer[WhoIsWidget(map.key((QTcpSocket*)sender()))].start(timeOut);
-        connect(&timer[t],SIGNAL(timeout()), SLOT(slotTimeOut()) );
-        return;
     }
     logging("ERROR 2(Error client request) Connecting client: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()));
     emit signalError(2);
@@ -263,12 +268,18 @@ void MainWindow::slotSendToClient(char byte)
 void MainWindow:: slotdisconnect()
 {
     QTcpSocket* pClientSocket = (QTcpSocket*)sender();
+
+    map2.key(pClientSocket)->stop();
+    disconnect(timer,SIGNAL(timeout()), this, SLOT(slotTimerEmptyClientOut()) );
+    delete map2.key(pClientSocket);
+    map2.remove(map2.key(pClientSocket) );
+
     if(map.size() > 0){
         int i = WhoIsWidget(map.key((QTcpSocket*)sender()));
         if(i != -1){
             list[i]->enabledHost(false);
             timer[i].stop();
-            map.remove(map.key((QTcpSocket*)sender()));
+            map.remove(map.key(pClientSocket));
             disconnect(list[i],  SIGNAL(signalPush(char)),   this, SLOT(slotSendToClient(char))  );
             disconnect(list[i],  SIGNAL(signalReboot(char)), this, SLOT(slotReboot(char))        );
         }
@@ -340,13 +351,24 @@ void MainWindow::slotTimerBlinkOut()
 }
 void MainWindow::slotSocketError(QAbstractSocket::SocketError err)
 {
-
+    qDebug() << err;
 }
 void MainWindow::slotTimeOut()
 {
-    qobject_cast<QTimer*>(sender())->stop();
-    map.value(list[WhoseIsTimer(qobject_cast<QTimer*>(sender()))]->getMacAddr())->close();
-    disconnect(qobject_cast<QTimer*>(sender()),SIGNAL(timeout()), this, SLOT(slotTimeOut()) );
+    QTimer* timer = (QTimer*)(sender());
+    timer->stop();
+    map.value(list[WhoseIsTimer(timer)]->getMacAddr())->close();
+    disconnect(timer,SIGNAL(timeout()), this, SLOT(slotTimeOut()) );
+}
+void MainWindow::slotTimerEmptyClientOut()
+{
+    QTimer* timer = (QTimer*)(sender());
+    timer->stop();
+    disconnect(timer,SIGNAL(timeout()), this, SLOT(slotTimerEmptyClientOut()) );
+    logging("ERROR 5 the client " + map2.value(timer)->peerAddress().toString() + ":" + QString::number(map2.value(timer)->peerPort())+  " does not transmit any data");
+    emit signalError(5);
+    map2.value(timer)->close();
+
 }
 void MainWindow::slotError(int err)
 {
@@ -373,6 +395,12 @@ void MainWindow::slotError(int err)
         pStatusBarError->setText("Ошибка: " + QString::number(err));
         break;
       case 3:
+        pStatusBarError->setText("Ошибка: " + QString::number(err));
+        break;
+      case 4:
+        pStatusBarError->setText("Ошибка: " + QString::number(err));
+        break;
+      case 5:
         pStatusBarError->setText("Ошибка: " + QString::number(err));
         break;
       default:

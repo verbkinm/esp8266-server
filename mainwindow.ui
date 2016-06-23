@@ -185,18 +185,30 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="Exit">
+   <property name="icon">
+    <iconset resource="img/img.qrc">
+     <normaloff>:/exit.png</normaloff>:/exit.png</iconset>
+   </property>
    <property name="text">
     <string>Выход</string>
    </property>
   </action>
   <action name="ErrorList">
+   <property name="icon">
+    <iconset resource="img/img.qrc">
+     <normaloff>:/error_list.png</normaloff>:/error_list.png</iconset>
+   </property>
    <property name="text">
     <string>Список ошибок</string>
    </property>
   </action>
   <action name="log">
+   <property name="icon">
+    <iconset resource="img/img.qrc">
+     <normaloff>:/log.png</normaloff>:/log.png</iconset>
+   </property>
    <property name="text">
-    <string>Лог</string>
+    <string>Лог-файл</string>
    </property>
   </action>
  </widget>
