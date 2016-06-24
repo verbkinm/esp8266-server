@@ -16,6 +16,10 @@
   <property name="windowTitle">
    <string>Панель управления изделиями УР-1</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="img/img.qrc">
+    <normaloff>:/main_window.png</normaloff>:/main_window.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>

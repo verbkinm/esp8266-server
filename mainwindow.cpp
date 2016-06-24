@@ -65,6 +65,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     logging("==============================");
     logging("Application start");
+
+    QString ipRange = "(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])";
+    QRegExp ipRegex ("^" + ipRange
+                         + "\\." + ipRange
+                         + "\\." + ipRange
+                         + "\\." + ipRange + "$");
+    QRegExpValidator *ipValidator = new QRegExpValidator(ipRegex, this);
+    ui->host->setValidator(ipValidator);
 }
 //###################
 //#    FUNCTIONS    #
@@ -90,6 +98,7 @@ void MainWindow::appendLogWindow()
   if(!ui->log->isEnabled()){
     QFile file(QString(QDir::currentPath().replace("/","\\") + "\\esp-01.log") );
     file.open(QIODevice::ReadOnly);
+    logFileRead->clear();
     logFileRead->addText(file.readAll());
   }
 }
@@ -129,25 +138,25 @@ void MainWindow::slotStartServer()
     if(!serverListening){
         m_ptcpServer = new QTcpServer(this);
         if(ui->port->text().isEmpty()){
-            QMessageBox::critical(0,"Ошибка ввода порта","Ошибка ввода номера порта - пустое значение недопустимо!");
+            QMessageBox::critical(this,"Ошибка ввода порта","Ошибка ввода номера порта - пустое значение недопустимо!");
             ui->port->setFocus();
             return;
         }
         bool isOk = false;
         int value = ui->port->text().toInt(&isOk);
         if(isOk == false){
-            QMessageBox::critical(0,"Ошибка ввода порта","Ошибка ввода номера порта - " +  ui->port->text() + ", не является числовым значением!");
+            QMessageBox::critical(this,"Ошибка ввода порта","Ошибка ввода номера порта - " +  ui->port->text() + ", не является числовым значением!");
             ui->port->setFocus();
             return;
         }
         if(value < 1 || value > 65535){
-            QMessageBox::critical(0,"Ошибка ввода порта","Ошибка ввода номера порта - " +  ui->port->text() + ", выходит за допустимые приделы(1-65535)!");
+            QMessageBox::critical(this,"Ошибка ввода порта","Ошибка ввода номера порта - " +  ui->port->text() + ", выходит за допустимые приделы(1-65535)!");
             ui->port->setFocus();
             return;
         }
 // Start server
         if (!m_ptcpServer->listen(QHostAddress(ui->host->text()), ui->port->text().toInt())) {
-            QMessageBox::critical(0,"Ошибка сервера","Невозможно запустить сервер: "+ m_ptcpServer->errorString() );
+            QMessageBox::critical(this,"Ошибка сервера","Невозможно запустить сервер: "+ m_ptcpServer->errorString() );
             m_ptcpServer->close();
             return;
         }
@@ -158,8 +167,6 @@ void MainWindow::slotStartServer()
         ui->start_listening->setStyleSheet(QString::fromUtf8("background-color: rgb(240, 29, 29);"));
         connect(m_ptcpServer, SIGNAL(newConnection()), SLOT(slotNewConnection()) );
         logging("Server start");
-        if(m_ptcpServer->serverAddress().toString() != ui->host->text())
-            ui->host->setText(m_ptcpServer->serverAddress().toString());
         return;
     }
     if(serverListening){
@@ -319,6 +326,7 @@ void MainWindow::slotOpenLog()
   logFileRead->show();
   ui->log->setEnabled(false);
   connect(logFileRead, SIGNAL(signalClose()), SLOT(slotCloseLog()) );
+  connect(logFileRead, SIGNAL(signalClearLogFile()), SLOT(slotClearLogFile()) );
 }
 void MainWindow::slotCloseErrorList()
 {
@@ -332,6 +340,15 @@ void MainWindow::slotCloseLog()
   delete logFileRead;
   ui->log->setEnabled(true);
 }
+void MainWindow::slotClearLogFile()
+{
+  logFileRead->clear();
+  QFile file(QString(QDir::currentPath().replace("/","\\") + "\\esp-01.log") );
+  file.open(QIODevice::WriteOnly);
+  file.write("");
+  disconnect(logFileRead, SIGNAL(signalClose()), this, SLOT(slotClearLogFile()) );
+}
+
 void MainWindow::slotTimeErrorOut()
 {
     emit signalError(0);

@@ -7,6 +7,7 @@ LogFileRead::LogFileRead(QWidget *parent) :
   ui(new Ui::LogFileRead)
 {
   ui->setupUi(this);
+  connect(ui->pushButton, SIGNAL(clicked(bool)), SIGNAL(signalClearLogFile()) );
 }
 /*virtual*/ void LogFileRead::closeEvent(QCloseEvent *)
 {
@@ -23,7 +24,10 @@ void LogFileRead::scrollToEnd()
   c.movePosition(QTextCursor::End);
   ui->textEdit->setTextCursor(c);
 }
-
+void LogFileRead::clear()
+{
+  ui->textEdit->clear();
+}
 LogFileRead::~LogFileRead()
 {
   delete ui;

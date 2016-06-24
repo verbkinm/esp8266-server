@@ -13,7 +13,6 @@ ErrorList::ErrorList(QMainWindow *parent) :
 {
     emit signalClose();
 }
-
 ErrorList::~ErrorList()
 {
   delete ui;

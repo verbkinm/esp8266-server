@@ -71,7 +71,7 @@ private slots:
             void slotCloseErrorList();
             void slotOpenLog      ();
             void slotCloseLog     ();
-
+            void slotClearLogFile ();
 signals:
             void signalError      (int);
 };

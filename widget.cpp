@@ -65,7 +65,7 @@ void Widget::slot_on_off()
         return;
     }
     if(ui->on_off->text() != "0" || ui->on_off->text() != "1" ){
-        QMessageBox::critical(0,"Ошибка устройства УР-1!","Невозможно получить ответ от подключенного устройства!" );
+        QMessageBox::critical(this,"Ошибка устройства УР-1!","Невозможно получить ответ от подключенного устройства!" );
         return;
     }
 }

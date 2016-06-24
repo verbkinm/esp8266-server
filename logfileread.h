@@ -17,10 +17,12 @@ public:
 
           void addText(QString text);
           void scrollToEnd();
+          void clear();
   virtual void closeEvent(QCloseEvent*);
 
 signals:
   void signalClose();
+  void signalClearLogFile();
 
 private:
   Ui::LogFileRead *ui;
