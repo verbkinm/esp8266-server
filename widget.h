@@ -2,10 +2,7 @@
 #define WIDGET_H
 
 #include <QWidget>
-#include <QTcpServer>
-#include <QTcpSocket>
 #include <QTimer>
-#include <QMap>
 
 namespace Ui {
   class Widget;
@@ -15,6 +12,12 @@ class Widget : public QWidget
 {
   Q_OBJECT
 
+private:
+  QTimer timer;
+  int timeWork = 0;
+
+  void setTimer(int d, int h, int m, int s, int ms);
+
 public:
     Widget(QWidget *parent = 0);
     ~Widget();
@@ -22,6 +25,7 @@ public:
     void enabledHost(bool b);
     void setMacAddr(QString mac);
     void setVal(int bit);
+    QString getWorkingTime();
     const QString getMacAddr();
     const QString getPing();
 
@@ -30,6 +34,7 @@ public:
 private slots:
     void slot_on_off();
     void slotReboot();
+    void slotTimerOut();
 
 signals:
     void signalPush(char);

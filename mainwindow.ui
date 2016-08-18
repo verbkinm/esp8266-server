@@ -58,6 +58,9 @@
           <bold>true</bold>
          </font>
         </property>
+        <property name="toolTip">
+         <string>На каком порту слушать</string>
+        </property>
         <property name="inputMask">
          <string/>
         </property>
@@ -94,6 +97,9 @@
           <bold>true</bold>
          </font>
         </property>
+        <property name="toolTip">
+         <string>По какому адресу слушать</string>
+        </property>
         <property name="text">
          <string>0.0.0.0</string>
         </property>
@@ -112,6 +118,9 @@
           <width>90</width>
           <height>23</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>Пуск \ Останов сервера</string>
         </property>
         <property name="text">
          <string>Пуск </string>
@@ -134,12 +143,15 @@
       <item row="2" column="0" colspan="4">
        <widget class="QGroupBox" name="groupBox">
         <property name="title">
-         <string>УР-1:</string>
+         <string>Список УР-1:</string>
         </property>
        </widget>
       </item>
       <item row="1" column="3">
        <widget class="QLabel" name="attention">
+        <property name="toolTip">
+         <string>Индикатор ошибки</string>
+        </property>
         <property name="text">
          <string/>
         </property>

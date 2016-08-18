@@ -40,18 +40,18 @@ MainWindow::MainWindow(QWidget *parent) :
     this->statusBar()->addWidget(pStatusBarCountClients);
     this->statusBar()->addWidget(pStatusBarError);
 
-    QString fileName = QDir::currentPath() + "\\tmp.mp3";
-    QFile fileQrc(":/attention.mp3");
-    fileQrc.open(QIODevice::ReadOnly);
-    QByteArray ba = fileQrc.readAll();
-    QFile fileTmp(fileName);
-    fileTmp.open(QIODevice::WriteOnly);
-    fileTmp.write(ba);
-    fileTmp.close();
-    fileQrc.close();
+//    QString fileName = QDir::currentPath() + "\\tmp.mp3";
+//    QFile fileQrc(":/attention.mp3");
+//    fileQrc.open(QIODevice::ReadOnly);
+//    QByteArray ba = fileQrc.readAll();
+//    QFile fileTmp(fileName);
+//    fileTmp.open(QIODevice::WriteOnly);
+//    fileTmp.write(ba);
+//    fileTmp.close();
+//    fileQrc.close();
 
     player = new QMediaPlayer;
-    player->setMedia(QUrl::fromLocalFile(fileName));
+    player->setMedia(QUrl("qrc:/attention.mp3"));
 
     connect(ui->ErrorList,        SIGNAL(triggered(bool)),SLOT(slotOpenErrorList()) );
     connect(ui->log,              SIGNAL(triggered(bool)),SLOT(slotOpenLog())       );
@@ -261,6 +261,10 @@ void MainWindow::slotReadClient()
             return;
         }
     }
+    if(answer.startsWith("cmd_")){
+        logging("client " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()) + " sent : " + QString(answer.data()) );
+        return;
+    }
     logging("ERROR 2(Error client request) Connecting client: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()));
     emit signalError(2);
     pClientSocket->close();// disconnected();
@@ -281,9 +285,11 @@ void MainWindow:: slotdisconnect()
     delete map2.key(pClientSocket);
     map2.remove(map2.key(pClientSocket) );
 
+    QString workingTime = "NOT CORRECT CLIENT";
     if(map.size() > 0){
         int i = WhoIsWidget(map.key((QTcpSocket*)sender()));
         if(i != -1){
+            workingTime = list[i]->getWorkingTime();
             list[i]->enabledHost(false);
             timer[i].stop();
             map.remove(map.key(pClientSocket));
@@ -293,7 +299,8 @@ void MainWindow:: slotdisconnect()
     }
     QString tmp = pStatusBarCountClients->text().mid(0,30);
     pStatusBarCountClients->setText(tmp + QString::number(--countClient));
-    logging("disconnecting peer: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()) );
+    logging("disconnecting peer: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()) + ", working time: " +  workingTime);
+    ui->start_listening->setFocus();
 }
 void MainWindow::slotReboot(char byte)
 {
