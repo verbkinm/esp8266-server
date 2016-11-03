@@ -15,6 +15,8 @@
 #include "logfileread.h"
 #include "widget.h"
 
+#define countClients 3
+
 namespace Ui {
   class MainWindow;
 }
@@ -24,14 +26,17 @@ class MainWindow : public QMainWindow
   Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = 0);
+    MainWindow(QObject *parent = 0);
     ~MainWindow();
+
 private:
     Ui::MainWindow              *ui;
     QTcpServer*                 m_ptcpServer;
-    QTimer                      timer[3];   //timer for ping
+    QTimer                      timerPing[countClients],
+                                timerArd[countClients]; //timer for ping, timer for arduino ping
     QMap<QString, QTcpSocket*>  map;  //map  - [key-addres, QTcpSocket*];
-    QMap<QTimer*, QTcpSocket*>  map2; //map2 - [timerEmptyClient, QTcpSocket*]
+    QMap<QTimer*, QTcpSocket*>  map2; //map2 - [slotTimerEmptyClientOut, QTcpSocket*]      -     slotTimerEmptyClientOut
+    QMap<QTimer*, QTcpSocket*>  map3; //map3 - [timerPingClientArduino, QTcpSocket*]
     bool                        serverListening, led;
     int                         countClient = 0;
     QTimer                      timerError, timerBlink;
@@ -59,6 +64,7 @@ private slots:
             void slotReadClient   ();
             void slotdisconnect   ();
             void slotTimeOut      ();
+            void slotTimeOutArd   ();
             void slotTimeErrorOut ();
             void slotTimerBlinkOut();
             void slotTimerEmptyClientOut();
@@ -72,6 +78,8 @@ private slots:
             void slotOpenLog      ();
             void slotCloseLog     ();
             void slotClearLogFile ();
+
+            void slotArduinoGetData();
 signals:
             void signalError      (int);
 };

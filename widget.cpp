@@ -1,18 +1,24 @@
 #include "widget.h"
 #include "ui_widget.h"
+#include "ui_arduinopanel.h"
 
 #include <QVBoxLayout>
 #include <QMessageBox>
 #include <QLabel>
+#include <QDebug>
 
-Widget::Widget(QWidget *parent) :
-  QWidget(parent),
+Widget::Widget(QObject *prt) :
+  QWidget(),isOpen(false),
   ui(new Ui::Widget)
 {
+  parent = prt;
+  qDebug() << parent;
+
   ui->setupUi(this);
   connect(ui->on_off, SIGNAL(clicked(bool)), SLOT(slot_on_off()) );
   connect(ui->reboot, SIGNAL(clicked(bool)), SLOT(slotReboot())  );
   connect(&timer,     SIGNAL(timeout()),     SLOT(slotTimerOut()));
+  connect(ui->bArduino_panel, SIGNAL(clicked(bool)),SLOT(slotArduinoOpen()) );
 }
 void Widget::enabledHost(bool b)
 {
@@ -37,8 +43,30 @@ void Widget::enabledHost(bool b)
         timer.stop();
         timeWork = 0;
         ui->timeWork->setText("00:00:00:00:00");
+
+        withArduino(false);
     }
 }
+void Widget::withArduino(bool b)
+{
+  if(b){
+    ui->ard->setText("ARD+");
+    QPalette tmp = ui->ard->palette();
+    tmp.setColor(QPalette::Text, Qt::green);
+    ui->ard->setPalette(tmp);
+    if(!isOpen)
+      ui->bArduino_panel->setEnabled(b);
+  }
+  if(!b){
+    ui->ard->setText("ARD-");
+    QPalette tmp = ui->ard->palette();
+    tmp.setColor(QPalette::Text, Qt::red);
+    ui->ard->setPalette(tmp);
+
+    ui->bArduino_panel->setEnabled(b);
+  }
+}
+
 const QString Widget::getMacAddr()
 {
   return ui->macaddr->text();
@@ -137,6 +165,25 @@ void Widget::setTimer(int d, int h, int m, int s, int ms)
     else
         sMs = QString::number(ms);
     ui->timeWork->setText(sD+":"+sH+":"+sM+":"+sS+":"+sMs);
+}
+void Widget::slotArduinoOpen()
+{
+//    emit signalSendOther('5');
+
+    emit signalArduinoOpen();
+    isOpen = true;
+    arduino_panel = new ArduinoPanel(parent);
+    arduino_panel->show();
+    ui->bArduino_panel->setEnabled(false);
+
+    connect(arduino_panel, SIGNAL(signalClose()), SLOT(slotArduinoClose()) );
+}
+void Widget::slotArduinoClose()
+{
+  isOpen = false;
+  disconnect(arduino_panel, SIGNAL(signalClose()), this, SLOT(slotArduinoClose()) );
+  delete arduino_panel;
+  ui->bArduino_panel->setEnabled(true);
 }
 
 Widget::~Widget()

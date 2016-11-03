@@ -7,5 +7,6 @@
         <file>error_list.png</file>
         <file>log.png</file>
         <file>main_window.png</file>
+        <file>arduino_panel.png</file>
     </qresource>
 </RCC>

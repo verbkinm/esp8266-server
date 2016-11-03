@@ -17,18 +17,21 @@ SOURCES += main.cpp\
     mainwindow.cpp \
     errorlist.cpp \
     log.cpp \
-    logfileread.cpp
+    logfileread.cpp \
+    arduinopanel.cpp
 
 HEADERS  += widget.h \
     mainwindow.h \
     errorlist.h \
     log.h \
-    logfileread.h
+    logfileread.h \
+    arduinopanel.h
 
 FORMS    += widget.ui \
     mainwindow.ui \
     errorlist.ui \
-    logfileread.ui
+    logfileread.ui \
+    arduinopanel.ui
 
 RESOURCES += \
     img/img.qrc
