@@ -12,8 +12,8 @@
 
 #include <QDebug>
 
-#define TIME_OUT 5000
-#define TIME_OUT_PING 3000
+#define TIME_OUT 7000
+#define TIME_OUT_PING 5000
 #define MAX_CLIENTS 3
 
 MainWindow::MainWindow(QObject *parent) :
@@ -199,7 +199,7 @@ void MainWindow::slotStartServer()
     QString tmp = pStatusBarCountClients->text().mid(0,30);
     pStatusBarCountClients->setText(tmp + QString::number(++countClient));
 
-    connect(pClientSocket, SIGNAL(disconnected()),pClientSocket,  SLOT(deleteLater())     );
+//    connect(pClientSocket, SIGNAL(disconnected()),pClientSocket,  SLOT(deleteLater())     );
     connect(pClientSocket, SIGNAL(disconnected()),this,           SLOT(slotdisconnect())  );
     connect(pClientSocket, SIGNAL(readyRead()),   this,           SLOT(slotReadClient())  );
     connect(pClientSocket, SIGNAL(error(QAbstractSocket::SocketError)),SLOT(slotSocketError(QAbstractSocket::SocketError)) );
@@ -215,6 +215,7 @@ void MainWindow::slotReadClient()
     map2.key(pClientSocket)->start(TIME_OUT);
 
     QByteArray answer = pClientSocket->readAll();
+//    qDebug() << answer;
     pClientSocket->flush();
 
     if(answer.startsWith("MAC:")){
@@ -280,7 +281,7 @@ void MainWindow::slotReadClient()
 
     logging("ERROR 2(Error client request) Connecting client: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()));
     emit signalError(2);
-    qDebug() << answer;
+//    qDebug() << answer;
     pClientSocket->close();// disconnected();
 }
 void MainWindow::slotSendToClient(char byte)
@@ -299,12 +300,11 @@ void MainWindow::slotArduinoGetData()
 void MainWindow::slotdisconnect()
 {
     QTcpSocket* pClientSocket = (QTcpSocket*)sender();
-
     QString workingTime = "NOT CORRECT CLIENT";
     if(map.size() > 0){
         map2.key(pClientSocket)->stop();
         int widget = WhoIsWidget(map.key(pClientSocket));
-        qDebug() << "widget " << widget;
+//        qDebug() << "widget " << widget;
         if(widget != -1){
             timerPing[widget].stop();
             workingTime = list[widget]->getWorkingTime();   // если перезагрузка то время работы ноль!!!
@@ -320,13 +320,13 @@ void MainWindow::slotdisconnect()
     map2.remove(map2.key(pClientSocket) );
     map3.remove(map3.key(pClientSocket) );
 
-    qDebug() << "map2" << map2.keys() << map2.values();
-    qDebug() << "map3 " << map3.keys() << map3.values();
+//    qDebug() << "map2" << map2.keys() << map2.values();
+//    qDebug() << "map3 " << map3.keys() << map3.values();
 
     if(map.size() > 0)
         map.remove(map.key(pClientSocket));
 
-    qDebug() << "map " << map.keys() << map.values();
+//    qDebug() << "map " << map.keys() << map.values();
     pStatusBarCountClients->setText(pStatusBarCountClients->text().mid(0,30) + QString::number(--countClient));
     logging("disconnecting peer: " + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()) + ", working time: " +  workingTime);
     if(workingTime == "NOT CORRECT CLIENT"){
@@ -334,6 +334,7 @@ void MainWindow::slotdisconnect()
         emit signalError(6);
     }
     ui->start_listening->setFocus();
+    pClientSocket->deleteLater();
 }
 void MainWindow::slotReboot(char byte)
 {
@@ -433,7 +434,7 @@ void MainWindow::slotSocketError(QAbstractSocket::SocketError err)
         break;
       }
     logging("Attention!!!" + pClientSocket->peerAddress().toString() + ":" + QString::number(pClientSocket->peerPort()) + ", socket error  - " +  error );
-    qDebug() << err;
+//    qDebug() << err;
 }
 void MainWindow::slotTimeOut()
 {
@@ -445,10 +446,10 @@ void MainWindow::slotTimeOut()
 }
 void MainWindow::slotTimeOutArd()
 {
-    qDebug() << map3.values() << map3.keys();
-    qDebug() << &timerArd[0];
+//    qDebug() << map3.values() << map3.keys();
+//    qDebug() << &timerArd[0];
     QTimer* timer = (QTimer*)(sender());
-    qDebug() << timer;
+//    qDebug() << timer;
     timer->stop();
     QTcpSocket* pClientSocket = map3.value(timer);
     int widget = WhoIsWidget(map.key(pClientSocket));

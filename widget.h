@@ -40,6 +40,7 @@ public:
 
 private slots:
     void slot_on_off();
+    void slot_on_off_2();
     void slotReboot();
     void slotTimerOut();
     void slotArduinoOpen();

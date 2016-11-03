@@ -33,9 +33,13 @@ void setup() {
   Serial.setTimeout(10);
   delay(10);
 
+  WiFi.mode(WIFI_STA);
+
   // prepare GPIO2
   pinMode(2, OUTPUT);
   digitalWrite(2, 0);
+  pinMode(0, OUTPUT);
+  digitalWrite(0, 0);
   
   // Connect to WiFi network
   Serial.println("\n");
@@ -68,8 +72,6 @@ void loop() {
     Serial.print("connected to server");Serial.print(" ");Serial.print(servername);Serial.print(":");
     Serial.println(PORT);
     client.print(macaddr);
-//    Serial.println(macaddr);
-//    client.print(val);
     delay(500);
   }
   while(client.connected()){
@@ -95,14 +97,14 @@ void loop() {
         Serial.println(incomingByte);
         if(incomingByte == 48 ){
             digitalWrite(2, 0);
-            Serial.println("GPIO is now low");
+            Serial.println("GPIO 2 is now low");
             client.print("low");
             val = "low";
             client.flush();
         }
         else if(incomingByte == 49 ){
             digitalWrite(2, 1);
-            Serial.println("GPIO is now high");
+            Serial.println("GPIO 2 is now high");
             client.print("high");
             val = "high";
             client.flush();
@@ -112,6 +114,20 @@ void loop() {
         }
         else if(incomingByte == 51 ){
 //            ESP.restart();
+        }
+        else if(incomingByte == 97 ){
+            digitalWrite(0, 0);
+            Serial.println("GPIO 0 is now low");
+//            client.print("low");
+//            val = "low";
+            client.flush();
+        }
+        else if(incomingByte == 98 ){
+            digitalWrite(0, 1);
+            Serial.println("GPIO 0 is now high");
+//            client.print("low");
+//            val = "low";
+            client.flush();
         }
         else{
             Serial.println("invalid request");
@@ -123,14 +139,16 @@ void loop() {
         client.stop();
         return;
     }
-    delay(10);
+    delay(100);
   }
-  delay(500);
+  delay(1000);
 }
 String addZero(byte* pByte)
 {
-  if( *pByte < 10 )
+  if( *pByte < 10 ){
     return "0" + String(*pByte);
+    Serial.println("zero");
+  }
   return String(*pByte,HEX); 
 }
 

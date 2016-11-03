@@ -1,6 +1,10 @@
 ESP:
 	chars:
-		48 - GPIO is now low
-		49 - GPIO is now high
-		50 - esp restart
-		51 - arduino request
+		
+48 - GPIO is now low
+		
+49 - GPIO is now high
+		
+50 - esp restart
+		
+51 - arduino request

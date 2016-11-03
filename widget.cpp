@@ -16,6 +16,7 @@ Widget::Widget(QObject *prt) :
 
   ui->setupUi(this);
   connect(ui->on_off, SIGNAL(clicked(bool)), SLOT(slot_on_off()) );
+  connect(ui->on_off_2, SIGNAL(clicked(bool)), SLOT(slot_on_off_2()) );
   connect(ui->reboot, SIGNAL(clicked(bool)), SLOT(slotReboot())  );
   connect(&timer,     SIGNAL(timeout()),     SLOT(slotTimerOut()));
   connect(ui->bArduino_panel, SIGNAL(clicked(bool)),SLOT(slotArduinoOpen()) );
@@ -24,6 +25,7 @@ void Widget::enabledHost(bool b)
 {
     ui->macaddr->setEnabled(b);
     ui->on_off->setEnabled(b);
+    ui->on_off_2->setEnabled(b);
     ui->reboot->setEnabled(b);
     ui->timeWork->setEnabled(b);
     if(b){
@@ -40,6 +42,7 @@ void Widget::enabledHost(bool b)
         ui->ping->setPalette(tmp);
         ui->macaddr->setText("00:00:00:00:00:00");
         ui->on_off->setText("?");
+        ui->on_off_2->setText("?");
         timer.stop();
         timeWork = 0;
         ui->timeWork->setText("00:00:00:00:00");
@@ -87,6 +90,7 @@ void Widget::setVal(int bit)
 {
     if(bit == -1){
         ui->on_off->setText("?");
+        ui->on_off_2->setText("?");
         return;
     }
     ui->on_off->setText(QString::number(bit));
@@ -105,6 +109,23 @@ void Widget::slot_on_off()
         QMessageBox::critical(this,"Ошибка устройства УР-1!","Невозможно получить ответ от подключенного устройства!" );
         return;
     }
+}
+void Widget::slot_on_off_2()
+{
+    if(ui->on_off_2->text() == "0"){
+        ui->on_off_2->setText("1");
+        emit signalPush('a');
+        return;
+    }
+    if(ui->on_off_2->text() == "1"){
+        ui->on_off_2->setText("0");
+        emit signalPush('b');
+        return;
+    }
+//    if(ui->on_off_2->text() != "0" || ui->on_off->text() != "1" ){
+//        QMessageBox::critical(this,"Ошибка устройства УР-1!","Невозможно получить ответ от подключенного устройства!" );
+//        return;
+//    }
 }
 void Widget::slotReboot()
 {
